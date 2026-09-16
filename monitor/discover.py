@@ -36,9 +36,20 @@ def sitemap_urls(fetcher: Fetcher, sitemap_url: str, *, max_depth: int = 3) -> l
     return out
 
 
+def robots_sitemaps(fetcher: Fetcher, base: str) -> list[str]:
+    txt = fetcher.get_text(f"{base}/robots.txt") or ""
+    return re.findall(r"(?im)^\s*sitemap:\s*(\S+)", txt)
+
+
 def product_urls(fetcher: Fetcher, shop: dict) -> list[str]:
     """Sitemap-URL's gefilterd tot waarschijnlijke productpagina's."""
     urls = sitemap_urls(fetcher, shop["sitemap"])
+    if not urls:
+        # De ingestelde sitemap gaf niets terug; kijk wat robots.txt aanwijst.
+        log.warning("%s: sitemap %s leverde niets op, robots.txt proberen",
+                    shop["label"], shop["sitemap"])
+        for alt in robots_sitemaps(fetcher, shop["base"]):
+            urls.extend(sitemap_urls(fetcher, alt))
     include = re.compile(shop["product_url_pattern"]) if shop.get("product_url_pattern") else None
     exclude = re.compile(shop["exclude_url_pattern"]) if shop.get("exclude_url_pattern") else None
 
