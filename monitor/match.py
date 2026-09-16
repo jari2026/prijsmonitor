@@ -101,6 +101,15 @@ def marker_conflict(a: Item, b: Item) -> bool:
     return bool(a.markers ^ b.markers)
 
 
+def ean_conflict(a: Item, b: Item) -> bool:
+    """Twee verschillende EAN's zijn twee verschillende artikelen. Punt.
+
+    Vangt wat namen niet verraden: Kneedbaar Hout "Wit" werd gekoppeld aan
+    "Naturel", omdat die kleurnaam nergens als kleur herkend werd.
+    """
+    return bool(a.offer.ean and b.offer.ean and a.offer.ean != b.offer.ean)
+
+
 def name_score(a: Item, b: Item) -> float:
     if not a.tokens or not b.tokens:
         return 0.0
@@ -133,8 +142,8 @@ def find_matches(own: Item, pool: list[Item], *, threshold: float = 0.6) -> list
                 continue
             if not size_matches(own, cand):
                 continue
-            if (color_conflict(own, cand) or gloss_conflict(own, cand)
-                    or marker_conflict(own, cand)):
+            if (ean_conflict(own, cand) or color_conflict(own, cand)
+                    or gloss_conflict(own, cand) or marker_conflict(own, cand)):
                 continue
             score = name_score(own, cand)
             if score < threshold:
