@@ -22,7 +22,8 @@ from .discover import filter_by_brands, product_urls
 from .extract import Offer
 from .http import Fetcher
 from .match import (Item, apply_overrides, enrich, find_matches, load_overrides)
-from .shops.adapters import ADAPTERS, EAN_FINDERS, woo_catalog, woo_offers
+from .shops.adapters import (ADAPTERS, EAN_FINDERS, woo_catalog,
+                             woo_offers, woo_products_by_slug)
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "docs" / "data"
@@ -219,9 +220,15 @@ def main() -> None:
     DATA.mkdir(parents=True, exist_ok=True)
 
     # 1. eigen assortiment
-    catalog = woo_catalog(fetcher, own_cfg["base"])
     slugs, skus = load_watchlist(ROOT / "config" / "watchlist.csv")
-    selected = select_own(catalog, slugs, skus, args.limit)
+    if slugs and not skus:
+        # Gericht opvragen is sneller en betrouwbaarder dan de hele catalogus.
+        selected = woo_products_by_slug(fetcher, own_cfg["base"], sorted(slugs))
+        gevonden = {p.get("slug") for p in selected}
+        for ontbreekt in sorted(slugs - gevonden):
+            log.warning("watchlist: geen product met slug %r op de site", ontbreekt)
+    else:
+        selected = select_own(woo_catalog(fetcher, own_cfg["base"]), slugs, skus, args.limit)
     log.info("%d eigen producten geselecteerd", len(selected))
 
     own_offers: list[Offer] = []
