@@ -26,12 +26,37 @@ def woo_catalog(fetcher: Fetcher, base: str, *, per_page: int = 100,
     for page in range(1, max_pages + 1):
         url = f"{base}/wp-json/wc/store/v1/products?per_page={per_page}&page={page}"
         batch = fetcher.get_json(url, use_cache=False)
+        if batch is None:
+            # Een mislukte pagina mag de rest van de catalogus niet stilzwijgend
+            # afkappen -- dat kostte de eerste run 17 van de 18 producten.
+            log.warning("catalogus pagina %d mislukt, wordt overgeslagen", page)
+            continue
         if not batch:
             break
         out.extend(p for p in batch if p.get("type") in keep_types)
         if len(batch) < per_page:
             break
     log.info("Verf-plaza: %d verkoopbare producten uit de Store API", len(out))
+    return out
+
+
+def woo_products_by_slug(fetcher: Fetcher, base: str, slugs: list[str],
+                         *, chunk: int = 20) -> list[dict]:
+    """Alleen de gevraagde producten ophalen, via de slug-filter van de Store API.
+
+    Scheelt zo'n 25 requests per run en kan niet half mislukken zoals het
+    doorlopen van de hele catalogus.
+    """
+    out: list[dict] = []
+    for i in range(0, len(slugs), chunk):
+        part = slugs[i:i + chunk]
+        url = f"{base}/wp-json/wc/store/v1/products?per_page=100&slug={','.join(part)}"
+        batch = fetcher.get_json(url, use_cache=False)
+        if not isinstance(batch, list):
+            log.warning("slug-opvraging mislukt voor: %s", ", ".join(part))
+            continue
+        out.extend(batch)
+    log.info("Verf-plaza: %d van %d gevraagde producten gevonden", len(out), len(slugs))
     return out
 
 
