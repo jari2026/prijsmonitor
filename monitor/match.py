@@ -15,7 +15,7 @@ from pathlib import Path
 from .extract import Offer
 from .normalize import (
     fold, line_tokens, normalize_brand, parse_color, parse_gloss,
-    parse_size, product_line, size_label,
+    parse_size, product_line, size_label, variant_markers,
 )
 
 log = logging.getLogger(__name__)
@@ -33,6 +33,7 @@ class Item:
     size: str | None
     gloss: str | None
     color: str | None
+    markers: set[str]
 
     @property
     def price_per_liter(self) -> float | None:
@@ -55,6 +56,7 @@ def enrich(offer: Offer) -> Item:
         size=size_label(liters, kilos),
         gloss=parse_gloss(full),
         color=color,
+        markers=variant_markers(full),
     )
 
 
@@ -94,6 +96,11 @@ def gloss_conflict(a: Item, b: Item) -> bool:
     return bool(a.gloss and b.gloss and a.gloss != b.gloss)
 
 
+def marker_conflict(a: Item, b: Item) -> bool:
+    """Een varianttermijn die maar aan één kant staat, betekent: ander product."""
+    return bool(a.markers ^ b.markers)
+
+
 def name_score(a: Item, b: Item) -> float:
     if not a.tokens or not b.tokens:
         return 0.0
@@ -126,7 +133,8 @@ def find_matches(own: Item, pool: list[Item], *, threshold: float = 0.6) -> list
                 continue
             if not size_matches(own, cand):
                 continue
-            if color_conflict(own, cand) or gloss_conflict(own, cand):
+            if (color_conflict(own, cand) or gloss_conflict(own, cand)
+                    or marker_conflict(own, cand)):
                 continue
             score = name_score(own, cand)
             if score < threshold:
