@@ -1,0 +1,78 @@
+name: Prijzen bijwerken
+
+on:
+  schedule:
+    - cron: "0 4 * * *"        # elke dag 06:00 Nederlandse tijd (04:00 UTC)
+  workflow_dispatch:            # knop om hem handmatig te starten
+    inputs:
+      limit:
+        description: "Aantal eigen producten (alleen zonder watchlist)"
+        default: "40"
+      max_pages:
+        description: "Max productpagina's per concurrent"
+        default: "1200"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: prijsmonitor
+  cancel-in-progress: false
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: Prijzen ophalen en koppelen
+        run: |
+          python -m monitor.run \
+            --limit "${{ inputs.limit || '40' }}" \
+            --max-pages "${{ inputs.max_pages || '1200' }}"
+
+      - name: Samenvatting
+        if: always()
+        run: |
+          if [ -f docs/data/report.json ]; then
+            echo '```json' >> $GITHUB_STEP_SUMMARY
+            cat docs/data/report.json >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Resultaat vastleggen
+        run: |
+          git config user.name  "prijsmonitor"
+          git config user.email "actions@users.noreply.github.com"
+          git add docs/data
+          git diff --staged --quiet || git commit -m "Prijzen $(date -u +%Y-%m-%d)"
+          git push
+
+  publiceren:
+    needs: scrape
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+      - run: git pull --ff-only
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+      - id: deploy
+        uses: actions/deploy-pages@v4
