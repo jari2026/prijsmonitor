@@ -186,6 +186,20 @@ def test_match_rejects_variant_markers():
         check(f"variant behouden: {concurrent[:40]}", len(find_matches(own, pool)), 1)
 
 
+def test_match_rejects_different_ean():
+    """Ook uit de praktijk: twee kleuren van hetzelfde blik, elk met eigen EAN."""
+    own = enrich(o("verfplaza", "Alabastine Kneedbaar Hout Wit / 75 gram", 4.63,
+                   brand="Alabastine", ean="8710839108502", sku="K1"))
+    pool = [enrich(o("decoprof", "Alabastine Kneedbaar Hout 75 GR - Naturel", 5.00,
+                     brand="Alabastine", ean="8710839108106"))]
+    check("andere ean geweigerd", find_matches(own, pool), [])
+
+    # zonder EAN aan de andere kant mag naam+inhoud het gewoon beslissen
+    geen_ean = [enrich(o("verfwinkel", "Alabastine Kneedbaar Hout - Wit 75 gram", 4.25,
+                         brand="Alabastine"))]
+    check("zonder ean nog steeds match", len(find_matches(own, geen_ean)), 1)
+
+
 def test_rows_and_position():
     own = [enrich(o("verfplaza", "Alabastine Muurvuller 1 liter", 9.95, brand="Alabastine", sku="A9"))]
     pool = [enrich(o("verfwinkel", "Alabastine Muurvuller 1 liter", 11.50, brand="Alabastine")),
