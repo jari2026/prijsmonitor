@@ -169,6 +169,26 @@ def parse_color(text: str) -> tuple[str | None, str | None]:
 
 
 # --------------------------------------------------------------------------
+# Varianttermen die twee anders identieke producten uit elkaar houden
+# --------------------------------------------------------------------------
+
+# Staat zo'n woord bij de één wél en bij de ander niet, dan zijn het andere
+# producten -- ook al klopt merk, inhoud en de rest van de naam. Gevonden in
+# de praktijk: "Voorstrijk Sneldrogend" (transparant) werd gekoppeld aan
+# "Voorstrijk Sneldrogend Dekkend" op bijna het dubbele van de prijs.
+# Als stam genoteerd, zodat "rolbaar" en "rolbare" allebei worden herkend.
+VARIANT_MARKERS = (
+    "dekkend", "transparant", "poeder", "pasta", "rolba", "spuitba",
+    "navulling", "testpot", "kleurstaal",
+)
+
+
+def variant_markers(text: str) -> set[str]:
+    low = f" {_fold(text)} "
+    return {m for m in VARIANT_MARKERS if f" {m}" in low or f"-{m}" in low}
+
+
+# --------------------------------------------------------------------------
 # Productlijn: naam minus merk, inhoud, kleur en ruis
 # --------------------------------------------------------------------------
 
