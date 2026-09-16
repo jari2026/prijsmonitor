@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-09-16T15:02:58+00:00",
+  "generated_at": "2026-09-16T15:19:40+00:00",
   "eigen_producten": 18,
   "eigen_artikelen": 41,
   "artikelen_met_match": 32,
   "artikelen_zonder_match": 9,
   "matches_via_ean": 38,
-  "matches_via_naam": 18,
+  "matches_via_naam": 15,
   "winkels": {
     "verfwinkel": {
       "methode": "ean-zoek",
