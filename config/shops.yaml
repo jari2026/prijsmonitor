@@ -69,4 +69,6 @@ crawl:
   requests_per_second: 1.0
   timeout_seconds: 30
   retries: 3
-  user_agent: "VerfplazaPrijsmonitor/1.0 (+administratie@verfplaza.nl) prijsvergelijking eigen assortiment"
+  # De "Mozilla/5.0 (compatible; ...)" vorm is de gangbare schrijfwijze voor een
+  # nette bot; hij noemt gewoon wie we zijn. Verf.nl wees de kale variant af.
+  user_agent: "Mozilla/5.0 (compatible; VerfplazaPrijsmonitor/1.0; +administratie@verfplaza.nl)"
