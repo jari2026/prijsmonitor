@@ -153,6 +153,39 @@ def test_match_rejects_color_and_gloss_conflict():
     check("kleur/glans conflict geweigerd", find_matches(own, pool), [])
 
 
+def test_match_rejects_variant_markers():
+    """Echte valse koppelingen uit de run van 16-09-2026.
+
+    Merk, inhoud en het grootste deel van de naam kloppen; één woord maakt er
+    een ander product van. Zonder deze regel stond er 44,48 naast 25,19.
+    """
+    def paar(eigen, concurrent):
+        return (enrich(o("verfplaza", eigen, 1.0, brand="Alabastine", sku="T")),
+                [enrich(o("verfwebwinkel", concurrent, 2.0, brand="Alabastine"))])
+
+    weg = [
+        ("Alabastine Voorstrijk Sneldrogend 5 Liter",
+         "Alabastine rolbare voorstrijk sneldrogend - wit - 5L"),
+        ("Alabastine Voorstrijk Sneldrogend 2,5 Liter",
+         "Alabastine Voorstrijk Sneldrogend Dekkend - 2,5L Wit"),
+        ("Alabastine Houtrotvuller 1 kg",
+         "Alabastine Houtrotvuller - Poeder - Naturel/vuren - 1kg"),
+    ]
+    for eigen, concurrent in weg:
+        own, pool = paar(eigen, concurrent)
+        check(f"variant geweigerd: {concurrent[:40]}", find_matches(own, pool), [])
+
+    blijft = [
+        ("Alabastine Spackspray 300 ml", "Alabastine Spackspray - 300ml"),
+        ("Alabastine Houtplamuur Universeel 250 gram", "Alabastine Houtplamuur - Universeel - 250g"),
+        ("Alabastine Houtvuller Wit / 330 Gram", "Alabastine Houtvuller - Wit - 330g"),
+        ("Alabastine Snelplamuur 225 Gram", "Alabastine Snelplamuur - 225g"),
+    ]
+    for eigen, concurrent in blijft:
+        own, pool = paar(eigen, concurrent)
+        check(f"variant behouden: {concurrent[:40]}", len(find_matches(own, pool)), 1)
+
+
 def test_rows_and_position():
     own = [enrich(o("verfplaza", "Alabastine Muurvuller 1 liter", 9.95, brand="Alabastine", sku="A9"))]
     pool = [enrich(o("verfwinkel", "Alabastine Muurvuller 1 liter", 11.50, brand="Alabastine")),
