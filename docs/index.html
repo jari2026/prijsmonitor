@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Prijsmonitor</title>
+<style>
+  :root {
+    color-scheme: light;
+    --surface-1: #fcfcfb;
+    --plane: #f9f9f7;
+    --ink: #0b0b0b;
+    --ink-2: #52514e;
+    --muted: #898781;
+    --grid: #e1e0d9;
+    --axis: #c3c2b7;
+    --ring: rgba(11,11,11,.10);
+    --cheaper: #2a78d6;      /* diverging koel: wij goedkoper */
+    --pricier: #d03b3b;      /* diverging warm: wij duurder  */
+    --equal: #898781;
+    --cheaper-wash: rgba(42,120,214,.10);
+    --pricier-wash: rgba(208,59,59,.10);
+    --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100;
+    --s5:#e87ba4; --s6:#008300; --s7:#4a3aa7; --s8:#e34948;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --surface-1:#1a1a19; --plane:#0d0d0d; --ink:#fff; --ink-2:#c3c2b7;
+      --muted:#898781; --grid:#2c2c2a; --axis:#383835; --ring:rgba(255,255,255,.10);
+      --cheaper:#3987e5; --pricier:#e66767;
+      --cheaper-wash:rgba(57,135,229,.14); --pricier-wash:rgba(230,103,103,.14);
+      --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500;
+      --s5:#d55181; --s6:#008300; --s7:#9085e9; --s8:#e66767;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --surface-1:#1a1a19; --plane:#0d0d0d; --ink:#fff; --ink-2:#c3c2b7;
+    --muted:#898781; --grid:#2c2c2a; --axis:#383835; --ring:rgba(255,255,255,.10);
+    --cheaper:#3987e5; --pricier:#e66767;
+    --cheaper-wash:rgba(57,135,229,.14); --pricier-wash:rgba(230,103,103,.14);
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500;
+    --s5:#d55181; --s6:#008300; --s7:#9085e9; --s8:#e66767;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--plane); color: var(--ink);
+    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  .wrap { max-width: 1400px; margin: 0 auto; padding: 24px 16px 64px; }
+
+  header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 12px 20px; margin-bottom: 20px; }
+  h1 { font-size: 22px; margin: 0; letter-spacing: -.01em; }
+  .stamp { color: var(--muted); font-size: 13px; }
+  .theme-btn {
+    margin-left: auto; background: none; border: 1px solid var(--ring); color: var(--ink-2);
+    border-radius: 8px; padding: 5px 11px; font: inherit; font-size: 13px; cursor: pointer;
+  }
+
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(165px, 1fr)); gap: 10px; margin-bottom: 20px; }
+  .tile { background: var(--surface-1); border: 1px solid var(--ring); border-radius: 12px; padding: 13px 15px; }
+  .tile .k { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .tile .v { font-size: 26px; font-weight: 600; margin-top: 3px; letter-spacing: -.02em; }
+  .tile .sub { font-size: 12px; color: var(--ink-2); }
+
+  .filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 14px; }
+  .filters input, .filters select {
+    font: inherit; font-size: 14px; padding: 7px 10px; border-radius: 8px;
+    border: 1px solid var(--ring); background: var(--surface-1); color: var(--ink);
+  }
+  .filters input[type=search] { min-width: 230px; flex: 1 1 230px; }
+  .linkish { background: none; border: 0; color: var(--ink-2); font: inherit; font-size: 13px;
+             text-decoration: underline; cursor: pointer; padding: 6px 2px; }
+
+  .card { background: var(--surface-1); border: 1px solid var(--ring); border-radius: 12px; overflow: hidden; }
+  .scroller { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  th, td { padding: 9px 12px; text-align: left; border-bottom: 1px solid var(--grid); vertical-align: top; }
+  th { font-size: 12px; font-weight: 600; color: var(--ink-2); text-transform: uppercase;
+       letter-spacing: .04em; white-space: nowrap; position: sticky; top: 0; background: var(--surface-1); z-index: 2; }
+  th.sortable { cursor: pointer; user-select: none; }
+  th.sortable:hover { color: var(--ink); }
+  .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  tbody tr:hover { background: color-mix(in srgb, var(--ink) 4%, transparent); }
+  tbody tr.open { background: color-mix(in srgb, var(--ink) 6%, transparent); }
+  .prod { min-width: 250px; }
+  .prod a { color: inherit; text-decoration: none; font-weight: 500; }
+  .prod a:hover { text-decoration: underline; }
+  .meta { color: var(--muted); font-size: 12px; margin-top: 2px; }
+
+  .chip { display: inline-flex; align-items: center; gap: 4px; border-radius: 999px;
+          padding: 1px 8px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .chip.cheaper { background: var(--cheaper-wash); color: var(--cheaper); }
+  .chip.pricier { background: var(--pricier-wash); color: var(--pricier); }
+  .chip.equal   { background: color-mix(in srgb, var(--muted) 16%, transparent); color: var(--ink-2); }
+  .chip.none    { background: none; color: var(--muted); font-weight: 400; }
+
+  td.cell { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+  td.cell.cheaper { background: var(--cheaper-wash); }
+  td.cell.pricier { background: var(--pricier-wash); }
+  td.cell a { color: inherit; text-decoration: none; }
+  td.cell a:hover { text-decoration: underline; }
+  td.cell .d { display: block; font-size: 11px; color: var(--ink-2); font-weight: 500; }
+  .weak { color: var(--muted); }
+  .flag { font-size: 11px; color: var(--muted); border: 1px solid var(--ring);
+          border-radius: 4px; padding: 0 4px; margin-left: 4px; }
+
+  .detail td { background: var(--plane); }
+  .detail h3 { font-size: 13px; margin: 0 0 8px; text-transform: uppercase; letter-spacing: .04em; color: var(--ink-2); }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12px; margin-top: 8px; }
+  .legend span { display: inline-flex; align-items: center; gap: 5px; color: var(--ink-2); }
+  .swatch { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+  .empty { padding: 40px 16px; text-align: center; color: var(--muted); }
+  footer { margin-top: 18px; font-size: 12px; color: var(--muted); }
+  footer code { background: color-mix(in srgb, var(--ink) 7%, transparent); padding: 1px 5px; border-radius: 4px; }
+  .banner { background: var(--surface-1); border: 1px solid var(--ring); border-left: 3px solid var(--s4);
+            border-radius: 10px; padding: 12px 15px; margin-bottom: 16px; font-size: 14px; color: var(--ink-2); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Prijsmonitor</h1>
+    <span class="stamp" id="stamp">laden…</span>
+    <button class="theme-btn" id="theme">donker / licht</button>
+  </header>
+
+  <div id="banner"></div>
+  <div class="tiles" id="tiles"></div>
+
+  <div class="filters">
+    <input type="search" id="q" placeholder="Zoek op naam, merk of EAN…" autocomplete="off">
+    <select id="brand"><option value="">Alle merken</option></select>
+    <select id="size"><option value="">Alle inhoud</option></select>
+    <select id="gloss"><option value="">Alle glansgraden</option></select>
+    <select id="pos">
+      <option value="">Alle posities</option>
+      <option value="goedkoopste">Wij goedkoopst</option>
+      <option value="gelijk">Gelijk aan goedkoopste</option>
+      <option value="duurder">Wij duurder</option>
+      <option value="duurste">Wij duurst</option>
+      <option value="onbekend">Geen match</option>
+    </select>
+    <select id="shop"><option value="">Elke concurrent</option></select>
+    <button class="linkish" id="csv">Download CSV</button>
+  </div>
+
+  <div class="card">
+    <div class="scroller"><table id="tbl">
+      <thead><tr id="head"></tr></thead>
+      <tbody id="body"></tbody>
+    </table></div>
+    <div class="empty" id="empty" hidden>Niets gevonden met deze filters.</div>
+  </div>
+
+  <footer id="foot"></footer>
+</div>
+
+<script>
+const EUR = new Intl.NumberFormat('nl-NL', {style:'currency', currency:'EUR'});
+const NUM = new Intl.NumberFormat('nl-NL', {minimumFractionDigits:2, maximumFractionDigits:2});
+const SERIES = ['--s1','--s2','--s3','--s4','--s5','--s6','--s7','--s8'];
+
+let DATA = null, HIST = {}, SHOPS = [], SORT = {key:'delta_pct', dir:-1}, OPEN = null;
+
+const el = id => document.getElementById(id);
+
+/* ---------- thema ---------- */
+const stored = localStorage.getItem('pm-theme');
+if (stored) document.documentElement.dataset.theme = stored;
+el('theme').onclick = () => {
+  const dark = getComputedStyle(document.body).backgroundColor === 'rgb(13, 13, 13)';
+  const next = dark ? 'light' : 'dark';
+  document.documentElement.dataset.theme = next;
+  try { localStorage.setItem('pm-theme', next); } catch (e) {}
+  if (OPEN !== null) redraw();
+};
+
+/* ---------- laden ---------- */
+Promise.all([
+  fetch('data/latest.json').then(r => r.ok ? r.json() : Promise.reject(r.status)),
+  fetch('data/history.json').then(r => r.ok ? r.json() : {}).catch(() => ({})),
+]).then(([latest, hist]) => {
+  DATA = latest; HIST = hist || {};
+  SHOPS = Object.keys(DATA.shops).filter(k => k !== 'verfplaza');
+  el('stamp').textContent = 'bijgewerkt ' + new Date(DATA.generated_at)
+      .toLocaleString('nl-NL', {dateStyle:'full', timeStyle:'short'});
+  buildFilters(); buildHead(); redraw(); tiles();
+}).catch(err => {
+  el('stamp').textContent = '';
+  el('banner').innerHTML = '<div class="banner">Nog geen data gevonden (<code>data/latest.json</code>). ' +
+    'Draai de workflow <strong>Prijzen bijwerken</strong> in GitHub Actions; daarna verschijnt het dashboard hier vanzelf.</div>';
+});
+
+/* ---------- filters ---------- */
+function buildFilters() {
+  fill('brand', uniq(DATA.rows.map(r => r.brand)));
+  fill('size',  uniq(DATA.rows.map(r => r.size)), sizeSort);
+  fill('gloss', uniq(DATA.rows.map(r => r.gloss)));
+  const s = el('shop');
+  SHOPS.forEach(k => s.add(new Option(DATA.shops[k], k)));
+  ['q','brand','size','gloss','pos','shop'].forEach(id => {
+    el(id).addEventListener(id === 'q' ? 'input' : 'change', () => { OPEN = null; redraw(); tiles(); });
+  });
+  el('csv').onclick = downloadCsv;
+}
+const uniq = a => [...new Set(a.filter(Boolean))].sort((x, y) => x.localeCompare(y, 'nl'));
+function sizeSort(a, b) { return toL(a) - toL(b); }
+function toL(s) {
+  if (!s) return 0;
+  const m = String(s).match(/([\d.,]+)\s*(ml|g|L|kg)/i); if (!m) return 0;
+  const n = parseFloat(m[1].replace(',', '.'));
+  return /ml|^g$/i.test(m[2]) ? n / 1000 : n;
+}
+function fill(id, values, sorter) {
+  const s = el(id); (sorter ? values.slice().sort(sorter) : values).forEach(v => s.add(new Option(v, v)));
+}
+
+function visible() {
+  const q = el('q').value.trim().toLowerCase();
+  const b = el('brand').value, sz = el('size').value, g = el('gloss').value;
+  const p = el('pos').value, sh = el('shop').value;
+  return DATA.rows.filter(r => {
+    if (b && r.brand !== b) return false;
+    if (sz && r.size !== sz) return false;
+    if (g && r.gloss !== g) return false;
+    if (p && r.position !== p) return false;
+    if (sh && !r.competitors.some(c => c.shop === sh)) return false;
+    if (q) {
+      const hay = [r.name, r.brand, r.sku, r.ean, r.size,
+                   ...r.competitors.map(c => c.name)].join(' ').toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+/* ---------- kop ---------- */
+function buildHead() {
+  const cols = [
+    {k:'name', t:'Product', cls:''},
+    {k:'size', t:'Inhoud', cls:''},
+    {k:'price', t:'Onze prijs', cls:'num'},
+    {k:'price_per_liter', t:'p/L', cls:'num'},
+    ...SHOPS.map(s => ({k:'shop:' + s, t:DATA.shops[s], cls:'num'})),
+    {k:'delta_pct', t:'Positie', cls:'num'},
+  ];
+  el('head').innerHTML = '';
+  cols.forEach(c => {
+    const th = document.createElement('th');
+    th.textContent = c.t; th.className = c.cls + ' sortable';
+    th.onclick = () => { SORT = {key:c.k, dir: SORT.key === c.k ? -SORT.dir : -1}; redraw(); };
+    el('head').appendChild(th);
+  });
+}
+
+function sortVal(r, key) {
+  if (key.startsWith('shop:')) {
+    const c = r.competitors.find(x => x.shop === key.slice(5));
+    return c ? c.price : Infinity;
+  }
+  const v = r[key];
+  return v === null || v === undefined ? (typeof r[key] === 'string' ? '' : Infinity) : v;
+}
+
+/* ---------- tabel ---------- */
+function redraw() {
+  const rows = visible().sort((a, b) => {
+    const x = sortVal(a, SORT.key), y = sortVal(b, SORT.key);
+    if (typeof x === 'string' || typeof y === 'string')
+      return String(x).localeCompare(String(y), 'nl') * SORT.dir;
+    return (x - y) * SORT.dir;
+  });
+  const body = el('body'); body.innerHTML = '';
+  el('empty').hidden = rows.length > 0;
+
+  rows.forEach(r => {
+    const tr = document.createElement('tr');
+    if (OPEN === (r.sku || r.url)) tr.className = 'open';
+    tr.onclick = ev => { if (ev.target.closest('a')) return;
+                         OPEN = OPEN === (r.sku || r.url) ? null : (r.sku || r.url); redraw(); };
+
+    tr.appendChild(td(`<div class="prod"><a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.name)}</a>
+      <div class="meta">${[r.brand, r.gloss, r.color, r.ean ? 'EAN ' + r.ean : '', r.sku ? 'art. ' + r.sku : '']
+        .filter(Boolean).map(esc).join(' · ')}</div></div>`));
+    tr.appendChild(td(esc(r.size || '—')));
+    tr.appendChild(td(r.price != null ? EUR.format(r.price) : '—', 'num'));
+    tr.appendChild(td(r.price_per_liter != null
+      ? `<span class="weak">${NUM.format(r.price_per_liter)}</span>` : '<span class="weak">—</span>', 'num'));
+
+    SHOPS.forEach(s => {
+      const c = r.competitors.find(x => x.shop === s);
+      if (!c || c.price == null) { tr.appendChild(td('<span class="weak">—</span>', 'cell')); return; }
+      const diff = r.price != null ? r.price - c.price : null;
+      const cls = diff == null ? '' : diff < -0.005 ? 'cheaper' : diff > 0.005 ? 'pricier' : '';
+      const low = c.score < 0.75 && c.method !== 'ean' && c.method !== 'handmatig';
+      tr.appendChild(td(
+        `<a href="${esc(c.url)}" target="_blank" rel="noopener" title="${esc(c.name)}">${EUR.format(c.price)}</a>` +
+        (low ? '<span class="flag" title="Automatische match, controleer even">?</span>' : '') +
+        (diff == null ? '' : `<span class="d">${diff < -0.005 ? '▼ ' : diff > 0.005 ? '▲ ' : '= '}${NUM.format(Math.abs(diff))}</span>`),
+        'cell ' + cls));
+    });
+
+    tr.appendChild(td(positionChip(r), 'num'));
+    body.appendChild(tr);
+
+    if (OPEN === (r.sku || r.url)) body.appendChild(detailRow(r));
+  });
+  el('foot').innerHTML = `${rows.length} van ${DATA.rows.length} artikelen · `
+    + `<span class="chip cheaper">▼ wij goedkoper</span> `
+    + `<span class="chip pricier">▲ wij duurder</span> `
+    + `· <span class="flag">?</span> automatische match met lagere zekerheid — klik de regel om te controleren`;
+}
+
+function positionChip(r) {
+  if (!r.competitors.length) return '<span class="chip none">geen match</span>';
+  if (r.delta_pct == null) return '<span class="chip none">—</span>';
+  const d = r.delta_pct;
+  if (d < -0.05) return `<span class="chip cheaper">▼ ${NUM.format(Math.abs(d))}%</span>`;
+  if (d > 0.05)  return `<span class="chip pricier">▲ ${NUM.format(d)}%</span>`;
+  return '<span class="chip equal">= gelijk</span>';
+}
+
+function td(html, cls) {
+  const c = document.createElement('td');
+  if (cls) c.className = cls;
+  c.innerHTML = html;
+  return c;
+}
+
+/* ---------- detail: prijsverloop ---------- */
+function detailRow(r) {
+  const tr = document.createElement('tr'); tr.className = 'detail';
+  const cell = document.createElement('td');
+  cell.colSpan = 4 + SHOPS.length + 1;
+  const series = HIST[r.sku || r.url] || {};
+  const shops = ['verfplaza', ...SHOPS].filter(s => (series[s] || []).length);
+
+  let html = '<h3>Prijsverloop</h3>';
+  html += shops.length > 1 || (shops.length === 1 && series[shops[0]].length > 1)
+    ? chart(series, shops)
+    : '<p class="weak" style="margin:0 0 10px">Nog te weinig metingen — het verloop verschijnt zodra er meerdere dagen data zijn.</p>';
+
+  html += '<h3 style="margin-top:14px">Gekoppelde artikelen</h3>';
+  html += '<table style="font-size:13px"><tbody>';
+  html += `<tr><td style="width:150px"><strong>${esc(DATA.shops.verfplaza)}</strong></td>
+           <td>${esc(r.name)}</td><td class="num">${r.price != null ? EUR.format(r.price) : '—'}</td>
+           <td class="weak">${esc(r.size || '')}</td><td class="weak">eigen artikel</td></tr>`;
+  r.competitors.forEach(c => {
+    html += `<tr><td><strong>${esc(DATA.shops[c.shop] || c.shop)}</strong></td>
+      <td><a href="${esc(c.url)}" target="_blank" rel="noopener">${esc(c.name)}</a></td>
+      <td class="num">${EUR.format(c.price)}</td>
+      <td class="weak">${esc(c.size || '')}${c.ean ? ' · EAN ' + esc(c.ean) : ''}</td>
+      <td class="weak">${esc(c.method)}${c.method === 'naam+inhoud' ? ' (' + Math.round(c.score * 100) + '%)' : ''}</td></tr>`;
+  });
+  if (!r.competitors.length)
+    html += '<tr><td colspan="5" class="weak">Geen concurrent gevonden met dezelfde inhoud en naam. '
+          + 'Voeg de juiste URL toe in <code>config/overrides.csv</code> om de koppeling af te dwingen.</td></tr>';
+  html += '</tbody></table>';
+  cell.innerHTML = html;
+  tr.appendChild(cell);
+  return tr;
+}
+
+function chart(series, shops) {
+  const W = 680, H = 170, P = {t:12, r:96, b:24, l:48};
+  const pts = [];
+  shops.forEach(s => (series[s] || []).forEach(([d, p]) => pts.push([Date.parse(d), p])));
+  if (!pts.length) return '';
+  let x0 = Math.min(...pts.map(p => p[0])), x1 = Math.max(...pts.map(p => p[0]));
+  if (x0 === x1) { x0 -= 864e5; x1 += 864e5; }
+  let y0 = Math.min(...pts.map(p => p[1])), y1 = Math.max(...pts.map(p => p[1]));
+  const pad = (y1 - y0) * .15 || Math.max(y1 * .05, .5);
+  y0 -= pad; y1 += pad;
+  const X = t => P.l + (t - x0) / (x1 - x0) * (W - P.l - P.r);
+  const Y = v => P.t + (1 - (v - y0) / (y1 - y0)) * (H - P.t - P.b);
+
+  let svg = `<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px;overflow:visible" role="img" aria-label="Prijsverloop">`;
+  for (let i = 0; i <= 3; i++) {
+    const v = y0 + (y1 - y0) * i / 3, y = Y(v);
+    svg += `<line x1="${P.l}" x2="${W - P.r}" y1="${y}" y2="${y}" stroke="var(--grid)" stroke-width="1"/>`;
+    svg += `<text x="${P.l - 8}" y="${y + 4}" text-anchor="end" font-size="11" fill="var(--muted)">${NUM.format(v)}</text>`;
+  }
+  [x0, x1].forEach((t, i) => {
+    svg += `<text x="${X(t)}" y="${H - 6}" text-anchor="${i ? 'end' : 'start'}" font-size="11" fill="var(--muted)">`
+        + new Date(t).toLocaleDateString('nl-NL', {day:'numeric', month:'short'}) + '</text>';
+  });
+  shops.forEach((s, i) => {
+    const col = `var(${SERIES[i % SERIES.length]})`;
+    const data = (series[s] || []).map(([d, p]) => [Date.parse(d), p]).sort((a, b) => a[0] - b[0]);
+    // stapfunctie: een prijs geldt tot de volgende meting
+    let d = '', last = null;
+    data.forEach(([t, p], j) => {
+      if (j === 0) d += `M${X(t)},${Y(p)}`;
+      else d += `L${X(t)},${Y(last)}L${X(t)},${Y(p)}`;
+      last = p;
+    });
+    d += `L${X(x1)},${Y(last)}`;
+    svg += `<path d="${d}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round"/>`;
+    data.forEach(([t, p]) => svg += `<circle cx="${X(t)}" cy="${Y(p)}" r="4" fill="${col}"
+      stroke="var(--plane)" stroke-width="2"><title>${DATA.shops[s]} — ${new Date(t)
+      .toLocaleDateString('nl-NL')}: ${EUR.format(p)}</title></circle>`);
+    svg += `<text x="${W - P.r + 8}" y="${Y(last) + 4}" font-size="11" fill="var(--ink-2)">`
+        + `${esc(DATA.shops[s])} ${NUM.format(last)}</text>`;
+  });
+  svg += '</svg>';
+  const legend = '<div class="legend">' + shops.map((s, i) =>
+    `<span><i class="swatch" style="background:var(${SERIES[i % SERIES.length]})"></i>${esc(DATA.shops[s])}</span>`
+  ).join('') + '</div>';
+  return svg + legend;
+}
+
+/* ---------- kengetallen ---------- */
+function tiles() {
+  const rows = visible();
+  const withM = rows.filter(r => r.competitors.length && r.delta_pct != null);
+  const cheap = withM.filter(r => r.position === 'goedkoopste').length;
+  const equal = withM.filter(r => r.position === 'gelijk').length;
+  const pricier = withM.filter(r => r.position === 'duurder' || r.position === 'duurste').length;
+  const med = median(withM.map(r => r.delta_pct));
+  const pct = n => withM.length ? Math.round(n / withM.length * 100) + '%' : '—';
+  el('tiles').innerHTML = [
+    tile('Artikelen', rows.length, `${withM.length} met een concurrent gekoppeld`),
+    tile('Wij goedkoopst', pct(cheap), `${cheap} artikelen`),
+    tile('Gelijk', pct(equal), `${equal} artikelen`),
+    tile('Wij duurder', pct(pricier), `${pricier} artikelen`),
+    tile('Mediaan verschil', med == null ? '—' : (med > 0 ? '+' : '') + NUM.format(med) + '%',
+         'ten opzichte van de goedkoopste concurrent'),
+  ].join('');
+}
+const tile = (k, v, sub) => `<div class="tile"><div class="k">${k}</div><div class="v">${v}</div><div class="sub">${sub}</div></div>`;
+function median(a) {
+  const s = a.filter(x => x != null).sort((x, y) => x - y);
+  if (!s.length) return null;
+  const m = s.length >> 1;
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+}
+
+/* ---------- export ---------- */
+function downloadCsv() {
+  const head = ['product', 'merk', 'inhoud', 'ean', 'artikelnr', 'onze_prijs', 'prijs_per_liter',
+                ...SHOPS.map(s => DATA.shops[s]), 'goedkoopste_concurrent', 'verschil_eur', 'verschil_pct', 'positie'];
+  const lines = [head];
+  visible().forEach(r => {
+    lines.push([r.name, r.brand, r.size, r.ean, r.sku, r.price, r.price_per_liter,
+      ...SHOPS.map(s => (r.competitors.find(c => c.shop === s) || {}).price ?? ''),
+      r.cheapest_competitor ?? '', r.delta_vs_cheapest ?? '', r.delta_pct ?? '', r.position]);
+  });
+  const csv = '﻿' + lines.map(row => row.map(v =>
+    `"${String(v ?? '').replace(/"/g, '""')}"`).join(';')).join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
+  a.download = `prijsmonitor-${DATA.date}.csv`;
+  a.click(); URL.revokeObjectURL(a.href);
+}
+
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+</script>
+</body>
+</html>

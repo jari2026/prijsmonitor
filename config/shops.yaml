@@ -1,0 +1,72 @@
+# Winkels die gevolgd worden.
+# adapter bepaalt hoe prijzen worden opgehaald:
+#   woo_store_api  - WooCommerce Store API (/wp-json/wc/store/v1)
+#   lightspeed     - Lightspeed eCom, product-URL + ?format=json
+#   jsonld         - server-rendered schema.org JSON-LD / OpenGraph op de productpagina
+#
+# Alle adapters ontdekken producten via de sitemap en filteren op merknaam in de URL.
+
+own: verfplaza
+
+shops:
+  verfplaza:
+    label: Verf-plaza
+    base: https://www.verf-plaza.nl
+    adapter: woo_store_api
+    sitemap: https://www.verf-plaza.nl/sitemap_index.xml
+    # Store API geeft prijzen; de productpagina geeft EAN via JSON-LD hasVariant
+    enrich_ean_from_page: true
+
+  verfwinkel:
+    label: Verfwinkel.nl
+    base: https://www.verfwinkel.nl
+    adapter: magento
+    ean_lookup: magento          # /catalogsearch/result/?q=<ean> vindt het artikel exact
+    sitemap: https://www.verfwinkel.nl/sitemap/nl/sitemap.xml
+    product_url_pattern: '^/[^/]+\.html$'
+    exclude_url_pattern: '^/(kleuren|blog|in-de-buurt|merken|verf-kopen|catalog|toebehoren|keuzehulp|default)/'
+
+  verfnl:
+    label: Verf.nl
+    base: https://www.verf.nl
+    adapter: jsonld
+    sitemap: https://www.verf.nl/feeds/productsitemap
+    product_url_pattern: '^/product/'
+
+  onlineverf:
+    label: Onlineverf.nl
+    base: https://www.onlineverf.nl
+    adapter: jsonld
+    sitemap: https://www.onlineverf.nl/content/sitemap/products.xml
+    product_url_pattern: '^/product/'
+
+  verfwebwinkel:
+    label: Verfwebwinkel.nl
+    base: https://www.verfwebwinkel.nl
+    adapter: jsonld
+    sitemap: https://www.verfwebwinkel.nl/sitemap.xml
+    product_url_pattern: '^/[^/]+\.html$'
+    exclude_url_pattern: '^/(advies|over-verfwebwinkel|hulp-contact|klantenservice|cookies)'
+
+  deverfzaak:
+    label: De Verfzaak
+    base: https://www.deverfzaak.nl
+    adapter: lightspeed
+    ean_lookup: lightspeed       # /search/<ean>/?format=json vindt het artikel exact
+    sitemap: https://www.deverfzaak.nl/sitemap.xml
+    product_url_pattern: '\.html$'
+
+  decoprof:
+    label: Decoprof
+    base: https://www.decoprof.nl
+    adapter: lightspeed
+    ean_lookup: lightspeed
+    sitemap: https://www.decoprof.nl/sitemap.xml
+    product_url_pattern: '\.html$'
+
+# Netjes blijven: 1 request per seconde per winkel, duidelijke user-agent.
+crawl:
+  requests_per_second: 1.0
+  timeout_seconds: 30
+  retries: 3
+  user_agent: "VerfplazaPrijsmonitor/1.0 (+administratie@verfplaza.nl) prijsvergelijking eigen assortiment"
