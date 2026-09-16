@@ -1,17 +1,17 @@
 {
-  "generated_at": "2026-09-16T14:05:45+00:00",
-  "eigen_producten": 1,
-  "eigen_artikelen": 2,
-  "artikelen_met_match": 2,
-  "artikelen_zonder_match": 0,
-  "matches_via_ean": 0,
-  "matches_via_naam": 4,
+  "generated_at": "2026-09-16T14:42:27+00:00",
+  "eigen_producten": 18,
+  "eigen_artikelen": 41,
+  "artikelen_met_match": 34,
+  "artikelen_zonder_match": 7,
+  "matches_via_ean": 38,
+  "matches_via_naam": 25,
   "winkels": {
     "verfwinkel": {
       "methode": "ean-zoek",
-      "gezocht": 2,
-      "gevonden": 2,
-      "offers": 4
+      "gezocht": 41,
+      "gevonden": 37,
+      "offers": 63
     },
     "verfnl": {
       "methode": "sitemap",
@@ -23,33 +23,33 @@
     "onlineverf": {
       "methode": "sitemap",
       "sitemap_urls": 1115,
-      "bezocht": 43,
-      "offers": 39,
+      "bezocht": 107,
+      "offers": 101,
       "met_ean": 0
     },
     "verfwebwinkel": {
       "methode": "sitemap",
       "sitemap_urls": 3008,
-      "bezocht": 21,
-      "offers": 21,
+      "bezocht": 74,
+      "offers": 62,
       "met_ean": 2
     },
     "deverfzaak": {
       "methode": "ean-zoek",
-      "gezocht": 2,
-      "gevonden": 0,
-      "offers": 0
+      "gezocht": 41,
+      "gevonden": 23,
+      "offers": 23
     },
     "decoprof": {
       "methode": "ean-zoek",
-      "gezocht": 2,
-      "gevonden": 0,
-      "offers": 0
+      "gezocht": 41,
+      "gevonden": 15,
+      "offers": 15
     }
   },
   "http": {
-    "requests": 91,
-    "cached": 1,
-    "errors": 3
+    "requests": 451,
+    "cached": 14,
+    "errors": 8
   }
 }
