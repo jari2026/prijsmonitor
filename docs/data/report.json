@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-17T04:12:02+00:00",
+  "generated_at": "2026-09-18T04:11:33+00:00",
   "eigen_producten": 18,
   "eigen_artikelen": 41,
   "artikelen_met_match": 32,
@@ -24,7 +24,7 @@
       "methode": "sitemap",
       "sitemap_urls": 1115,
       "bezocht": 107,
-      "offers": 101,
+      "offers": 102,
       "met_ean": 0
     },
     "verfwebwinkel": {
@@ -32,7 +32,7 @@
       "sitemap_urls": 3008,
       "bezocht": 74,
       "offers": 62,
-      "met_ean": 2
+      "met_ean": 3
     },
     "deverfzaak": {
       "methode": "ean-zoek",
