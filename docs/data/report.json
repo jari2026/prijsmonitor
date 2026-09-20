@@ -1,10 +1,10 @@
 {
-  "generated_at": "2026-09-19T04:11:08+00:00",
+  "generated_at": "2026-09-20T04:11:11+00:00",
   "eigen_producten": 18,
   "eigen_artikelen": 41,
   "artikelen_met_match": 32,
   "artikelen_zonder_match": 9,
-  "matches_via_ean": 39,
+  "matches_via_ean": 38,
   "matches_via_naam": 15,
   "winkels": {
     "verfwinkel": {
@@ -22,7 +22,7 @@
     },
     "onlineverf": {
       "methode": "sitemap",
-      "sitemap_urls": 1115,
+      "sitemap_urls": 1119,
       "bezocht": 107,
       "offers": 102,
       "met_ean": 0
@@ -32,7 +32,7 @@
       "sitemap_urls": 3008,
       "bezocht": 74,
       "offers": 62,
-      "met_ean": 4
+      "met_ean": 2
     },
     "deverfzaak": {
       "methode": "ean-zoek",
