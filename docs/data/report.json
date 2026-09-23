@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-22T04:11:38+00:00",
+  "generated_at": "2026-09-23T04:12:40+00:00",
   "eigen_producten": 18,
   "eigen_artikelen": 41,
   "artikelen_met_match": 32,
@@ -32,7 +32,7 @@
       "sitemap_urls": 3008,
       "bezocht": 74,
       "offers": 62,
-      "met_ean": 2
+      "met_ean": 3
     },
     "deverfzaak": {
       "methode": "ean-zoek",
