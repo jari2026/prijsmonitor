@@ -1,10 +1,10 @@
 {
-  "generated_at": "2026-09-23T04:12:40+00:00",
+  "generated_at": "2026-09-24T04:11:43+00:00",
   "eigen_producten": 18,
   "eigen_artikelen": 41,
   "artikelen_met_match": 32,
   "artikelen_zonder_match": 9,
-  "matches_via_ean": 38,
+  "matches_via_ean": 39,
   "matches_via_naam": 15,
   "winkels": {
     "verfwinkel": {
@@ -32,7 +32,7 @@
       "sitemap_urls": 3008,
       "bezocht": 74,
       "offers": 62,
-      "met_ean": 3
+      "met_ean": 4
     },
     "deverfzaak": {
       "methode": "ean-zoek",
