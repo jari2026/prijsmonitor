@@ -1,17 +1,17 @@
 {
-  "generated_at": "2026-09-28T04:12:56+00:00",
+  "generated_at": "2026-09-29T04:12:07+00:00",
   "eigen_producten": 18,
   "eigen_artikelen": 41,
   "artikelen_met_match": 32,
   "artikelen_zonder_match": 9,
-  "matches_via_ean": 38,
-  "matches_via_naam": 14,
+  "matches_via_ean": 39,
+  "matches_via_naam": 16,
   "winkels": {
     "verfwinkel": {
       "methode": "ean-zoek",
       "gezocht": 41,
       "gevonden": 37,
-      "offers": 61
+      "offers": 63
     },
     "verfnl": {
       "methode": "sitemap",
@@ -29,10 +29,10 @@
     },
     "verfwebwinkel": {
       "methode": "sitemap",
-      "sitemap_urls": 3008,
+      "sitemap_urls": 3021,
       "bezocht": 74,
       "offers": 62,
-      "met_ean": 2
+      "met_ean": 3
     },
     "deverfzaak": {
       "methode": "ean-zoek",
